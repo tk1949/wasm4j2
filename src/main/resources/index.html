@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WASM</title>
+</head>
+<body>
+WASM
+</body>
+<script>
+function getWasm(wasm) {
+    return fetch(wasm)
+        .then(res => {
+            if (res.ok)
+                return res.arrayBuffer();
+            throw new Error(`Unable to fetch Web Assembly file ${wasm}.`);
+        })
+        .then(bytes => WebAssembly.compile(bytes))
+        .then(module => {
+            const imports = {
+                env: {}
+            };
+            Object.assign(imports.env, {
+                memoryBase: 0,
+                tableBase: 0,
+                memory: new WebAssembly.Memory({
+                    initial: 256,
+                    maximum: 256
+                }),
+                table: new WebAssembly.Table({
+                    initial: 0,
+                    maximum: 0,
+                    element: 'anyfunc'
+                })
+            });
+            return WebAssembly.instantiate(module, imports)
+        })
+        .then(instance => instance.exports)
+        .catch(e => console.log(e));
+}
+
+function wasm() {
+    getWasm('Math.wasm').then(wasm => {
+        console.log(wasm);
+    });
+}
+
+wasm();
+</script>
+</html>
